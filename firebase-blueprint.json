@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "An income or expense financial transaction belonging to a user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated owner"
+        },
+        "title": {
+          "type": "string",
+          "description": "Short description of the transaction"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Transaction amount in local currency"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Transaction direction: income or expense"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category name in Arabic"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["essential", "luxury"],
+          "description": "Whether the expense is essential or luxury"
+        },
+        "recurrence": {
+          "type": "string",
+          "enum": ["fixed", "variable"],
+          "description": "Whether the transaction is fixed or variable"
+        },
+        "wallet": {
+          "type": "string",
+          "enum": ["cash", "bank", "ewallet"],
+          "description": "Wallet type used for the transaction"
+        },
+        "txDateEpochMs": {
+          "type": "integer",
+          "description": "Transaction occurrence timestamp in epoch milliseconds"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when updated (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "amount",
+        "type",
+        "category",
+        "priority",
+        "recurrence",
+        "wallet",
+        "txDateEpochMs",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Monthly spending cap per expense category for a user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated owner"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category name in Arabic"
+        },
+        "monthlyLimit": {
+          "type": "number",
+          "description": "Monthly budget cap for this category"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when updated (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": [
+        "userId",
+        "category",
+        "monthlyLimit",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "QuickTemplate": {
+      "title": "QuickTemplate",
+      "description": "One-tap quick expense template for instant transaction logging",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated owner"
+        },
+        "title": {
+          "type": "string",
+          "description": "Template label"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Default expense amount"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category name in Arabic"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["essential", "luxury"],
+          "description": "Essential or luxury classification"
+        },
+        "recurrence": {
+          "type": "string",
+          "enum": ["fixed", "variable"],
+          "description": "Fixed or variable expense"
+        },
+        "wallet": {
+          "type": "string",
+          "enum": ["cash", "bank", "ewallet"],
+          "description": "Default wallet type"
+        },
+        "iconKey": {
+          "type": "string",
+          "description": "Icon identifier for the template button"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when updated (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "amount",
+        "category",
+        "priority",
+        "recurrence",
+        "wallet",
+        "iconKey",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "User-scoped financial transactions"
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": { "$ref": "#/entities/Budget" },
+      "description": "User-scoped monthly category budgets"
+    },
+    "/users/{userId}/templates/{templateId}": {
+      "schema": { "$ref": "#/entities/QuickTemplate" },
+      "description": "User-scoped 1-tap quick expense templates"
+    }
+  }
+}

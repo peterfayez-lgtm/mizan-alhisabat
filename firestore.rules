@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidTransaction(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             (data.amount is int || data.amount is float) && data.amount > 0 && data.amount <= 1000000000 &&
+             data.type is string && (data.type == 'income' || data.type == 'expense') &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.priority is string && (data.priority == 'essential' || data.priority == 'luxury') &&
+             data.recurrence is string && (data.recurrence == 'fixed' || data.recurrence == 'variable') &&
+             data.wallet is string && (data.wallet == 'cash' || data.wallet == 'bank' || data.wallet == 'ewallet') &&
+             data.txDateEpochMs is int && data.txDateEpochMs > 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBudget(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             (data.monthlyLimit is int || data.monthlyLimit is float) && data.monthlyLimit >= 0 && data.monthlyLimit <= 1000000000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidQuickTemplate(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             (data.amount is int || data.amount is float) && data.amount > 0 && data.amount <= 1000000000 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.priority is string && (data.priority == 'essential' || data.priority == 'luxury') &&
+             data.recurrence is string && (data.recurrence == 'fixed' || data.recurrence == 'variable') &&
+             data.wallet is string && (data.wallet == 'cash' || data.wallet == 'bank' || data.wallet == 'ewallet') &&
+             data.iconKey is string && data.iconKey.size() >= 1 && data.iconKey.size() <= 40 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/transactions/{txId} {
+      allow get: if isOwner(userId) && isValidId(txId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(txId) &&
+                       incoming().keys().hasAll(['userId', 'title', 'amount', 'type', 'category', 'priority', 'recurrence', 'wallet', 'txDateEpochMs', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'title', 'amount', 'type', 'category', 'priority', 'recurrence', 'wallet', 'txDateEpochMs', 'createdAt', 'updatedAt']) &&
+                       isValidTransaction(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(txId) &&
+                       isValidTransaction(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'amount', 'type', 'category', 'priority', 'recurrence', 'wallet', 'txDateEpochMs', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(txId);
+    }
+
+    match /users/{userId}/budgets/{budgetId} {
+      allow get: if isOwner(userId) && isValidId(budgetId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(budgetId) &&
+                       incoming().keys().hasAll(['userId', 'category', 'monthlyLimit', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'category', 'monthlyLimit', 'createdAt', 'updatedAt']) &&
+                       isValidBudget(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(budgetId) &&
+                       isValidBudget(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['category', 'monthlyLimit', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(budgetId);
+    }
+
+    match /users/{userId}/templates/{templateId} {
+      allow get: if isOwner(userId) && isValidId(templateId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(templateId) &&
+                       incoming().keys().hasAll(['userId', 'title', 'amount', 'category', 'priority', 'recurrence', 'wallet', 'iconKey', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'title', 'amount', 'category', 'priority', 'recurrence', 'wallet', 'iconKey', 'createdAt', 'updatedAt']) &&
+                       isValidQuickTemplate(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(templateId) &&
+                       isValidQuickTemplate(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'amount', 'category', 'priority', 'recurrence', 'wallet', 'iconKey', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(templateId);
+    }
+  }
+}

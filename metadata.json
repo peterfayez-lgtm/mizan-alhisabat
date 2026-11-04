@@ -1,0 +1,6 @@
+{
+  "name": "ميزان المالي",
+  "description": "نظام ذكي لإدارة الدخل والمصروفات، الميزانيات وسرعة الصرف، التنبؤ المالي، ومحاكي التوفير مع مزامنة Excel/CSV",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
