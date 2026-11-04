@@ -12,6 +12,11 @@ import org.json.JSONObject
 
 object AppUpdateManager {
 
+    const val DEFAULT_GITHUB_REPO = "peterfayez-lgtm/mizan-alhisabat"
+    const val DEFAULT_GITHUB_RELEASES_API = "https://api.github.com/repos/$DEFAULT_GITHUB_REPO/releases/latest"
+    const val DEFAULT_RAW_MANIFEST_URL = "https://raw.githubusercontent.com/$DEFAULT_GITHUB_REPO/main/version_manifest.json"
+    const val DEFAULT_APK_DOWNLOAD_URL = "https://github.com/$DEFAULT_GITHUB_REPO/releases/latest/download/Mizan-AlHisabat-Latest.apk"
+
     val currentVersionCode: Int
         get() = BuildConfig.VERSION_CODE
 
@@ -28,7 +33,7 @@ object AppUpdateManager {
      */
     fun normalizeGitHubOrManifestUrl(rawInput: String): String {
         val trimmed = rawInput.trim()
-        if (trimmed.isBlank()) return ""
+        if (trimmed.isBlank()) return DEFAULT_GITHUB_RELEASES_API
 
         // If already a direct API or raw JSON URL, keep as-is
         if (trimmed.contains("api.github.com/repos/", ignoreCase = true) ||
@@ -63,15 +68,30 @@ object AppUpdateManager {
     }
 
     /**
-     * فحص وجود تحديث جديد عبر GitHub Releases API أو رابط JSON سحابي مجاني
+     * فحص وجود تحديث جديد عبر GitHub Releases API أو ملف version_manifest.json في المستودع
      * أو من إعدادات الناشر المحفوظة.
      */
     suspend fun checkForUpdates(settings: AppSettings): Result<AppUpdateManifest> =
         withContext(Dispatchers.IO) {
-            val manifestUrl = normalizeGitHubOrManifestUrl(settings.updateManifestUrl)
-            if (manifestUrl.startsWith("http://") || manifestUrl.startsWith("https://")) {
+            val primaryUrl = normalizeGitHubOrManifestUrl(settings.updateManifestUrl)
+            val candidateUrls = buildList {
+                if (primaryUrl.startsWith("http://") || primaryUrl.startsWith("https://")) {
+                    add(primaryUrl)
+                }
+                if (primaryUrl.contains("api.github.com/repos/")) {
+                    val repoPath = primaryUrl
+                        .substringAfter("api.github.com/repos/")
+                        .substringBefore("/releases")
+                    add("https://raw.githubusercontent.com/$repoPath/main/version_manifest.json")
+                } else {
+                    add(DEFAULT_RAW_MANIFEST_URL)
+                }
+            }.distinct()
+
+            var lastException: Exception? = null
+            for (url in candidateUrls) {
                 try {
-                    val conn = (URL(manifestUrl).openConnection() as HttpURLConnection).apply {
+                    val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                         requestMethod = "GET"
                         setRequestProperty("Accept", "application/vnd.github+json, application/json")
                         setRequestProperty("User-Agent", "Mizan-Finance-Android-App")
@@ -87,17 +107,19 @@ object AppUpdateManager {
                         }
                     }
                 } catch (e: Exception) {
-                    if (settings.publishedLatestVersionCode <= currentVersionCode) {
-                        return@withContext Result.failure(e)
-                    }
+                    lastException = e
                 }
+            }
+
+            if (lastException != null && settings.publishedLatestVersionCode <= currentVersionCode) {
+                return@withContext Result.failure(lastException)
             }
 
             // Fallback to local/published broadcast settings
             val fallbackManifest = AppUpdateManifest(
                 latestVersionCode = settings.publishedLatestVersionCode.coerceAtLeast(currentVersionCode),
                 latestVersionName = settings.publishedLatestVersionName.ifBlank { currentVersionName },
-                apkDownloadUrl = settings.publishedApkDownloadUrl.trim(),
+                apkDownloadUrl = settings.publishedApkDownloadUrl.trim().ifBlank { DEFAULT_APK_DOWNLOAD_URL },
                 releaseNotesAr = settings.publishedReleaseNotesAr.ifBlank {
                     "تحديث جديد يتضمن تحسينات في الأداء ومزايا ذكية إضافية مع الحفاظ الكامل على بياناتك."
                 },
@@ -221,7 +243,7 @@ object AppUpdateManager {
         apkDownloadUrl: String,
         releaseNotesAr: String
     ): String {
-        val safeUrl = apkDownloadUrl.trim().ifBlank { "ضع رابط تحميل ملف الـ APK الجديد من GitHub Releases هنا" }
+        val safeUrl = apkDownloadUrl.trim().ifBlank { DEFAULT_APK_DOWNLOAD_URL }
         return buildString {
             appendLine("🚀 *تحديث سحابي جديد لتطبيق ميزان المالي (الإصدار v$versionName)*")
             appendLine("📦 رقم البناء: *Build #$versionCode*")

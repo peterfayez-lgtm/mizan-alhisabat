@@ -1,0 +1,10 @@
+{
+  "appName": "ميزان المالي الذكي",
+  "applicationId": "com.aistudio.smartfinance.mznkxp",
+  "latestVersionCode": 3,
+  "latestVersionName": "2.1.0",
+  "apkDownloadUrl": "https://github.com/peterfayez-lgtm/mizan-alhisabat/releases/latest/download/Mizan-AlHisabat-Latest.apk",
+  "releaseNotesAr": "• تفعيل الإرسال التلقائي الأساسي عبر CallMeBot للواتساب (201021992233) وإضافة بوت تليجرام.\n• ربط التحديث السحابي التلقائي بمستودع peterfayez-lgtm/mizan-alhisabat على GitHub Releases.\n• حاسبة سريعة لإضافة المعاملات في 3 ثوانٍ مع الحفاظ الكامل على جميع البيانات.",
+  "isMandatoryUpdate": false,
+  "publishedDateAr": "2026-11-04"
+}

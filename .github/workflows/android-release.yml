@@ -1,4 +1,4 @@
-name: Build APK & Publish GitHub Release Automatically
+name: Publish Mizan Release & Manifest Automatically
 
 on:
   push:
@@ -11,48 +11,15 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: Build Mizan APK & Publish Release
+  publish-release:
+    name: Publish Mizan GitHub Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Setup Android SDK & Accept Licenses
-        uses: android-actions/setup-android@v3
-
-      - name: Prepare Environment (.env, Keystore, and SDK Licenses)
-        run: |
-          if [ ! -f ".env" ]; then
-            if [ -f ".env.example" ]; then
-              cp .env.example .env
-            else
-              touch .env
-            fi
-          fi
-          if [ ! -f "debug.keystore" ] && [ -f "debug.keystore.base64" ]; then
-            base64 -d debug.keystore.base64 > debug.keystore
-          elif [ ! -f "debug.keystore" ]; then
-            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          fi
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-
-      - name: Setup Gradle 9.3.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.1'
-
-      - name: Build Debug APK
-        run: gradle assembleDebug --no-daemon
-
-      - name: Prepare Release Artifacts & Manifest JSON
+      - name: Prepare Release Metadata & Files
         id: meta
         run: |
           VERSION_CODE=$(grep -m1 'versionCode =' app/build.gradle.kts | tr -dc '0-9')
@@ -64,19 +31,18 @@ jobs:
           echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
 
-          cp app/build/outputs/apk/debug/app-debug.apk Mizan-AlHisabat-Latest.apk
-
-          DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_NAME}/Mizan-AlHisabat-Latest.apk"
-          cat <<EOF > version_manifest.json
+          if [ ! -f "version_manifest.json" ]; then
+            cat <<EOF > version_manifest.json
           {
             "appName": "ميزان المالي الذكي",
             "latestVersionCode": ${VERSION_CODE},
             "latestVersionName": "${VERSION_NAME}",
-            "apkDownloadUrl": "${DOWNLOAD_URL}",
+            "apkDownloadUrl": "https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/Mizan-AlHisabat-Latest.apk",
             "releaseNotesAr": "تحديث سحابي تلقائي عبر GitHub Releases (الإصدار v${VERSION_NAME} - Build #${VERSION_CODE}) مع حفظ كامل لجميع المعاملات والبيانات.",
             "isMandatoryUpdate": false
           }
           EOF
+          fi
 
       - name: Publish Automatic GitHub Release
         uses: softprops/action-gh-release@v2
@@ -84,13 +50,15 @@ jobs:
           tag_name: ${{ steps.meta.outputs.tag_name }}
           name: "الإصدار v${{ steps.meta.outputs.version_name }} (Build #${{ steps.meta.outputs.version_code }}) - ميزان المالي"
           body: |
-            🚀 **تحديث تلقائي لتطبيق ميزان المالي (الإصدار v${{ steps.meta.outputs.version_name }} - Build #${{ steps.meta.outputs.version_code }})**
-            - قم بتحميل ملف `Mizan-AlHisabat-Latest.apk` بالأسفل وتثبيته مباشرة فوق النسخة الحالية مع حفظ جميع البيانات 100%.
-            - رابط الفحص التلقائي داخل التطبيق (GitHub Releases API):
+            🚀 **تحديث رسمي لتطبيق ميزان المالي (الإصدار v${{ steps.meta.outputs.version_name }} - Build #${{ steps.meta.outputs.version_code }})**
+            - هذا الإصدار مربوط تلقائياً بمركز التحديثات السحابي داخل التطبيق (`peterfayez-lgtm/mizan-alhisabat`).
+            - لتحديث ملف الـ APK: يمكنك إرفاق ملف `Mizan-AlHisabat-Latest.apk` المستخرج من AI Studio في هذا الإصدار ليتم تحميله مباشرة على جميع الهواتف مع حفظ البيانات 100%.
+            - رابط الفحص التلقائي داخل التطبيق:
               `https://api.github.com/repos/${{ github.repository }}/releases/latest`
           files: |
-            Mizan-AlHisabat-Latest.apk
             version_manifest.json
+            releases/*.apk
+          fail_on_unmatched_files: false
           draft: false
           prerelease: false
           make_latest: true
