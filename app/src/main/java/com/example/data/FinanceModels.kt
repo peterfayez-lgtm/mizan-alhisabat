@@ -189,11 +189,11 @@ data class AppSettings(
     val telegramBotToken: String = "", // توكن بوت تليجرام من BotFather
     val telegramChatId: String = "", // معرف المحادثة (Chat ID) في تليجرام
     val autoCheckUpdatesOnLaunch: Boolean = true, // فحص التحديثات تلقائياً عند فتح البرنامج
-    val updateManifestUrl: String = "", // رابط ملف JSON أو GitHub Release لفحص التحديثات تلقائياً لجميع الهواتف
+    val updateManifestUrl: String = "https://api.github.com/repos/peterfayez-lgtm/mizan-alhisabat/releases/latest", // رابط GitHub Releases التلقائي لمستودعك
     val publishedLatestVersionCode: Int = 3, // كود أحدث إصدار منشور
     val publishedLatestVersionName: String = "2.1.0", // اسم أحدث إصدار منشور
-    val publishedApkDownloadUrl: String = "", // رابط تحميل ملف الـ APK أو متجر جوجل بلاي
-    val publishedReleaseNotesAr: String = "• تفعيل الإرسال التلقائي الأساسي عبر CallMeBot للواتساب وإضافة بوت تليجرام.\n• حاسبة سريعة لإضافة المعاملات في 3 ثوانٍ مع الجمع والطرح الفوري.\n• دعم InstaPay وفودافون كاش وويدجت الشاشة الرئيسية ودفتر الديون (ليا وعليّا).",
+    val publishedApkDownloadUrl: String = "https://github.com/peterfayez-lgtm/mizan-alhisabat/releases/latest/download/Mizan-AlHisabat-Latest.apk", // رابط تحميل ملف الـ APK المباشر من GitHub Releases
+    val publishedReleaseNotesAr: String = "• تفعيل الإرسال التلقائي الأساسي عبر CallMeBot للواتساب وإضافة بوت تليجرام.\n• ربط التحديث السحابي التلقائي بمستودع peterfayez-lgtm/mizan-alhisabat على GitHub Releases.\n• حاسبة سريعة لإضافة المعاملات في 3 ثوانٍ مع الجمع والطرح الفوري.",
     val publishedIsMandatoryUpdate: Boolean = false, // هل التحديث إجباري أم اختياري
     val simpleMinimalistUiMode: Boolean = true, // الوضع البسيط الاحترافي (واجهة بنكية هادئة غير مزدحمة)
     val autoCaptureBankNotifications: Boolean = true, // قراءة وتحليل إشعارات البنوك وإنستاباي تلقائياً

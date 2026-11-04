@@ -85,13 +85,15 @@ class FinanceRepository(
                 telegramBotToken = prefs.getString("telegram_bot_token", "") ?: "",
                 telegramChatId = prefs.getString("telegram_chat_id", "") ?: "",
                 autoCheckUpdatesOnLaunch = prefs.getBoolean("auto_check_updates_on_launch", true),
-                updateManifestUrl = prefs.getString("update_manifest_url", "") ?: "",
+                updateManifestUrl = prefs.getString("update_manifest_url", "")?.takeIf { it.isNotBlank() }
+                    ?: "https://api.github.com/repos/peterfayez-lgtm/mizan-alhisabat/releases/latest",
                 publishedLatestVersionCode = prefs.getInt("published_latest_version_code", 3).coerceAtLeast(1),
                 publishedLatestVersionName = prefs.getString("published_latest_version_name", "2.1.0") ?: "2.1.0",
-                publishedApkDownloadUrl = prefs.getString("published_apk_download_url", "") ?: "",
+                publishedApkDownloadUrl = prefs.getString("published_apk_download_url", "")?.takeIf { it.isNotBlank() }
+                    ?: "https://github.com/peterfayez-lgtm/mizan-alhisabat/releases/latest/download/Mizan-AlHisabat-Latest.apk",
                 publishedReleaseNotesAr = prefs.getString(
                     "published_release_notes_ar",
-                    "• تفعيل الإرسال التلقائي الأساسي عبر CallMeBot للواتساب وإضافة بوت تليجرام.\n• حاسبة سريعة لإضافة المعاملات في 3 ثوانٍ مع الجمع والطرح الفوري.\n• دعم InstaPay وفودافون كاش وويدجت الشاشة الرئيسية ودفتر الديون (ليا وعليّا)."
+                    "• تفعيل الإرسال التلقائي الأساسي عبر CallMeBot للواتساب وإضافة بوت تليجرام.\n• ربط التحديث السحابي التلقائي بمستودع peterfayez-lgtm/mizan-alhisabat على GitHub Releases.\n• حاسبة سريعة لإضافة المعاملات في 3 ثوانٍ مع الجمع والطرح الفوري."
                 ) ?: "",
                 publishedIsMandatoryUpdate = prefs.getBoolean("published_is_mandatory_update", false),
                 simpleMinimalistUiMode = prefs.getBoolean("simple_minimalist_ui_mode", true),

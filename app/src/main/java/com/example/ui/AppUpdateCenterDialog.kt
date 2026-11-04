@@ -107,9 +107,13 @@ fun AppUpdateCenterDialog(
         mutableStateOf(appSettings.autoCheckUpdatesOnLaunch)
     }
     var updateManifestUrl by remember(appSettings.updateManifestUrl) {
-        mutableStateOf(appSettings.updateManifestUrl)
+        mutableStateOf(
+            appSettings.updateManifestUrl.ifBlank {
+                "https://api.github.com/repos/peterfayez-lgtm/mizan-alhisabat/releases/latest"
+            }
+        )
     }
-    var githubRepoShorthand by remember { mutableStateOf("") }
+    var githubRepoShorthand by remember { mutableStateOf("peterfayez-lgtm/mizan-alhisabat") }
     var pubVersionCodeInput by remember(appSettings.publishedLatestVersionCode) {
         mutableStateOf(appSettings.publishedLatestVersionCode.toString())
     }
@@ -117,7 +121,11 @@ fun AppUpdateCenterDialog(
         mutableStateOf(appSettings.publishedLatestVersionName)
     }
     var pubApkUrlInput by remember(appSettings.publishedApkDownloadUrl) {
-        mutableStateOf(appSettings.publishedApkDownloadUrl)
+        mutableStateOf(
+            appSettings.publishedApkDownloadUrl.ifBlank {
+                "https://github.com/peterfayez-lgtm/mizan-alhisabat/releases/latest/download/Mizan-AlHisabat-Latest.apk"
+            }
+        )
     }
     var pubReleaseNotesInput by remember(appSettings.publishedReleaseNotesAr) {
         mutableStateOf(appSettings.publishedReleaseNotesAr)
